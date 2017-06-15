@@ -2,13 +2,7 @@
 " plugin/ttt.vim
 "
 " Maintainer: YUSE Yosihiro <yoyuse@gmail.com>
-" Last Change: 2017-05-26
-"
-" History:
-"   2017-05-26 1.0 ttt#do_ttt(), ttt#move_fFtT() <- ttt#Doconv(), ttt#MovefFtT()
-"   2016-08-06 0.8 <Plug> keymap
-"   2013-06-21 0.4 remove scriptencoding declaretion
-"   2013-06-13 0.0 initial version
+" Last Change: 2017-06-15
 
 if exists("g:loaded_ttt")
   finish

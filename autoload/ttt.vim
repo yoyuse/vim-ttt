@@ -2,21 +2,29 @@
 " autoload/ttt.vim
 "
 " Maintainer: YUSE Yosihiro <yoyuse@gmail.com>
-" Last Change: 2017-06-15
+" Last Change: 2021-03-01
 "
 " Usage:
 "
-"   if has('gui_macvim')
-"     imap <D-j> <Plug>(ttt-i-M-j)
-"     cmap <D-j> <Plug>(ttt-c-C-f-n-i)<D-j><Plug>(ttt-i-C-c)
+"   if has('gui_macvim') && has('gui_running')
+"     " use Command+j
+"     imap <D-j> <Plug>(ttt-do-ttt)
+"     cmap <D-j> <Plug>(ttt-do-ttt-cmdline)
+"     " or use Option+j
+"     set macmeta
+"     imap <M-j> <Plug>(ttt-do-ttt)
+"     cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
 "   elseif has('win32') || has('win64')
 "         \ || has('unix') && has('x11') && has('gui_running') " for Ubuntu
-"     imap <M-j> <Plug>(ttt-i-M-j)
-"     cmap <M-j> <Plug>(ttt-c-C-f-n-i)<M-j><Plug>(ttt-i-C-c)
+"     " use Alt+j
+"     imap <M-j> <Plug>(ttt-do-ttt)
+"     cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
 "   else
-"     " for Terminal
-"     imap <Esc>j <Plug>(ttt-i-M-j)
-"     cmap <Esc>j <Plug>(ttt-c-C-f-n-i)<Esc>j<Plug>(ttt-i-C-c)
+"     " use Option+j
+"     " (for Terminal.app check 'メタキーとして Option キーを使用')
+"     " (for iTerm2.app   check 'Option key acts as +Esc')
+"     imap <Esc>j <Plug>(ttt-do-ttt)
+"     cmap <Esc>j <Plug>(ttt-do-ttt-cmdline)
 "   endif
 "
 "   nmap f<CR> <Plug>(ttt-n-f)
@@ -1025,12 +1033,9 @@ let g:ttt_table = get(g:, 'ttt_table',
 
 function! s:get_line_substring()
   if col(".") == 1
-    let s:list = []
-    return s:list
+    return ""
   endif
-  let str = getline(".")[:col(".") - 1 - 1]
-  let s:list = split(str, '\zs')
-  return s:list
+  return getline(".")[:col(".") - 1 - 1]
 endfunction
 
 function! s:scan_tail()
@@ -1060,12 +1065,12 @@ function! s:scan_body()
 endfunction
 
 function! s:scan_head()
-  let s:head = join(s:list[0 : s:beg - 1], "")
+  let s:head = s:beg < 1 ? "" : join(s:list[0 : s:beg - 1], "")
   return 0
 endfunction
 
-function! s:get_body()
-  call s:get_line_substring()
+function! s:get_body(str)
+  let s:list = split(a:str, '\zs')
   call s:scan_tail()
   call s:scan_body()
   if 0 < s:beg && s:list[s:beg - 1] == g:ttt_delimiter
@@ -1106,14 +1111,14 @@ function! s:trans(ch)
   endif
 endfunction
 
-function! s:do_ttt()
+function! s:do_ttt(str)
   call s:reset()
   let s:head = ""
   let s:body_list = []
   let s:tail = ""
   let s:decoded = ""
   let s:delimitered = 0
-  let list = s:get_body()
+  let list = s:get_body(a:str)
   for ch in list
     let s:decoded .= s:trans(ch)
   endfor
@@ -1126,7 +1131,11 @@ function! s:do_ttt()
 endfunction
 
 function! ttt#do_ttt()
-  return s:do_ttt()
+  return s:do_ttt(s:get_line_substring())
+endfunction
+
+function! ttt#do_ttt_cmdline()
+  return s:do_ttt(getcmdline())
 endfunction
 
 " --------------------------------------------------------------------

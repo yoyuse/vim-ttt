@@ -2,7 +2,7 @@
 " plugin/ttt.vim
 "
 " Maintainer: YUSE Yosihiro <yoyuse@gmail.com>
-" Last Change: 2017-06-15
+" Last Change: 2021-03-01
 
 if exists("g:loaded_ttt")
   finish
@@ -14,10 +14,8 @@ set cpo&vim
 
 " --------------------------------------------------------------------
 
-inoremap <expr> <Plug>(ttt-i-M-j) ttt#do_ttt()
-"inoremap        <Plug>(ttt-i-C-c) <C-c>
-inoremap        <Plug>(ttt-i-C-c) <C-c><Space><BS>
-cnoremap        <Plug>(ttt-c-C-f-n-i) <C-f>i
+inoremap <expr> <Plug>(ttt-do-ttt) ttt#do_ttt()
+cnoremap <expr> <Plug>(ttt-do-ttt-cmdline) ttt#do_ttt_cmdline()
 
 noremap <expr> <Plug>(ttt-n-f) ttt#move_fFtT('f')
 noremap <expr> <Plug>(ttt-n-F) ttt#move_fFtT('F')

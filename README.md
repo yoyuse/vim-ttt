@@ -15,25 +15,25 @@ and add something like following to .vimrc:
 ```vim
 set runtimepath+=path/to/vim-ttt
 
-if has('gui_macvim')
+if has('gui_macvim') && has('gui_running')
   " use Command+j
-  inoremap <silent> <D-j>       <C-R>=ttt#do_ttt()<CR>
-  cnoremap          <D-j> <C-F>i<C-R>=ttt#do_ttt()<CR><C-C><Space><BS>
+  imap <D-j> <Plug>(ttt-do-ttt)
+  cmap <D-j> <Plug>(ttt-do-ttt-cmdline)
   " or use Option+j
   set macmeta
-  inoremap <silent> <M-j>       <C-R>=ttt#do_ttt()<CR>
-  cnoremap          <M-j> <C-F>i<C-R>=ttt#do_ttt()<CR><C-C><Space><BS>
+  imap <M-j> <Plug>(ttt-do-ttt)
+  cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
 elseif has('win32') || has('win64')
       \ || has('unix') && has('x11') && has('gui_running') " for Ubuntu
   " use Alt+j
-  inoremap <silent> <M-j>       <C-R>=ttt#do_ttt()<CR>
-  cnoremap          <M-j> <C-F>i<C-R>=ttt#do_ttt()<CR><C-C><Space><BS>
+  imap <M-j> <Plug>(ttt-do-ttt)
+  cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
 else
   " use Option+j
   " (for Terminal.app check 'メタキーとして Option キーを使用')
   " (for iTerm2.app   check 'Option key acts as +Esc')
-  inoremap <silent> <Esc>j       <C-R>=ttt#do_ttt()<CR>
-  cnoremap          <Esc>j <C-F>i<C-R>=ttt#do_ttt()<CR><C-C><Space><BS>
+  imap <Esc>j <Plug>(ttt-do-ttt)
+  cmap <Esc>j <Plug>(ttt-do-ttt-cmdline)
 endif
 
 nmap f<CR> <Plug>(ttt-n-f)

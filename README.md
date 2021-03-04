@@ -17,22 +17,21 @@ set runtimepath+=path/to/vim-ttt
 
 if has('gui_macvim') && has('gui_running')
   " use Command+j
-  imap <D-j> <Plug>(ttt-do-ttt)
+  imap <D-j> <C-g>u<Plug>(ttt-do-ttt)
   cmap <D-j> <Plug>(ttt-do-ttt-cmdline)
   " or use Option+j
   set macmeta
-  imap <M-j> <Plug>(ttt-do-ttt)
+  imap <M-j> <C-g>u<Plug>(ttt-do-ttt)
   cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
-elseif has('win32') || has('win64')
-      \ || has('unix') && has('x11') && has('gui_running') " for Ubuntu
+elseif has('gui_running')
   " use Alt+j
-  imap <M-j> <Plug>(ttt-do-ttt)
+  imap <M-j> <C-g>u<Plug>(ttt-do-ttt)
   cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
 else
   " use Option+j
   " (for Terminal.app check 'メタキーとして Option キーを使用')
-  " (for iTerm2.app   check 'Option key acts as +Esc')
-  imap <Esc>j <Plug>(ttt-do-ttt)
+  " (for iTerm2.app   check 'Left/Right Option key: Esc+')
+  imap <Esc>j <C-g>u<Plug>(ttt-do-ttt)
   cmap <Esc>j <Plug>(ttt-do-ttt-cmdline)
 endif
 

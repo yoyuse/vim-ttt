@@ -33,24 +33,27 @@ This plug-in does NOT provide any default key mappings.
 To enable ttt, you should set your own key mappings at .vimrc.
 
 Mapping example: >
-	if has('gui_macvim') && has('gui_running')
-	  " use Command+j
-	  imap <D-j> <C-g>u<Plug>(ttt-do-ttt)
-	  cmap <D-j> <Plug>(ttt-do-ttt-cmdline)
-	  " or use Option+j
+	" use Alt+j
+	imap <M-j> <C-g>u<Plug>(ttt-do-ttt)
+	cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
+	" use Option+j as Alt+j in MacVim
+	if has('gui_macvim')
 	  set macmeta
-	  imap <M-j> <C-g>u<Plug>(ttt-do-ttt)
-	  cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
-	elseif has('gui_running')
-	  " use Alt+j
-	  imap <M-j> <C-g>u<Plug>(ttt-do-ttt)
-	  cmap <M-j> <Plug>(ttt-do-ttt-cmdline)
-	else
-	  " use Option+j
-	  " (for Terminal.app check 'メタキーとして Option キーを使用')
-	  " (for iTerm2.app   check 'Left/Right Option key: Esc+')
+	endif
+
+	" or use Command+j
+	imap <D-j> <C-g>u<Plug>(ttt-do-ttt)
+	cmap <D-j> <Plug>(ttt-do-ttt-cmdline)
+
+	" use Option+j in macOS terminal
+	" (for Terminal.app check 'メタキーとして Option キーを使用')
+	" (for iTerm2.app   check 'Left/Right Option key: Esc+')
+	if !has('gui_running') && !has('nvim')
 	  imap <Esc>j <C-g>u<Plug>(ttt-do-ttt)
 	  cmap <Esc>j <Plug>(ttt-do-ttt-cmdline)
+	  " or use Ctrl+j
+	  imap <C-j> <C-g>u<Plug>(ttt-do-ttt)
+	  cmap <C-j> <Plug>(ttt-do-ttt-cmdline)
 	endif
 
 	nmap f<CR> <Plug>(ttt-n-f)

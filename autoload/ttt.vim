@@ -2,7 +2,7 @@
 " autoload/ttt.vim
 "
 " Maintainer: YUSE Yosihiro <yoyuse@gmail.com>
-" Last Change: 2024-02-23
+" Last Change: 2024-04-10
 "
 " Usage:
 "
@@ -828,7 +828,7 @@ let g:ttt_table = get(g:, 'ttt_table',
 \       [
 \         "", "", "", "", "", "埼", "碕", "鷺", "咋", "朔",
 \         "嘉", "伽", "俺", "牡", "桶", "柵", "窄", "鮭", "笹", "匙",
-\         "蝦", "茄", "苛", "禾", "珂", "拶", "", "薩", "皐", "鯖",
+\         "蝦", "茄", "苛", "禾", "珂", "拶", "@m", "薩", "皐", "鯖",
 \         "峨", "俄", "霞", "迦", "嘩", "捌", "錆", "鮫", "晒", "撒"
 \       ],
 \       [
@@ -1107,7 +1107,7 @@ let g:ttt_table = get(g:, 'ttt_table',
 \       [
 \         "", "", "", "", "", "", "", "", "", "",
 \         "燃", "届", "毒", "銅", "童", "頻", "敏", "瓶", "怖", "扶",
-\         "拝", "俳", "，", "", "馬", "浮", "符", "腐", "膚", "譜",
+\         "拝", "俳", "，", "@b", "馬", "浮", "符", "腐", "膚", "譜",
 \         "畑", "麦", "梅", "』", "肺", "賦", "赴", "附", "侮", "封"
 \       ],
 \       [
@@ -1369,6 +1369,9 @@ function! s:do_ttt(str)
   if s:delimitered
     let src = g:ttt_delimiter . src
   endif
+  "
+  let s:decoded = s:reduce(s:decoded)
+  "
   let sub = s:decoded . s:tail
   return substitute(src, '.', "\<BS>", 'g') . sub
 endfunction
@@ -1411,6 +1414,316 @@ endfunction
 
 function! ttt#move_fFtT(map)
   return s:move_fFtT(a:map)
+endfunction
+
+" --------------------------------------------------------------------
+
+let s:reverse_table = {}
+
+function! s:make_reverse_table(table, prefix)
+  let table = a:table
+  let prefix = a:prefix
+  let keys = g:ttt_keys
+  let chars = split(keys, '\zs')
+  let k = 0
+  while k < len(chars)
+    let tbl = table[k]
+    let code = prefix + [k]
+    if type(tbl) == type([])
+      call s:make_reverse_table(tbl, code)
+    elseif type(tbl) == type("") && tbl != ""
+      if get(s:reverse_table, tbl, v:null) == v:null
+        let s:reverse_table[tbl] = []
+      endif
+      call add(s:reverse_table[tbl], code)
+    endif
+    let k = k + 1
+  endwhile
+  return s:reverse_table
+endfunction
+
+call s:make_reverse_table(g:ttt_table, [])
+
+function! s:rev(char)
+  let char = a:char
+  let keys = split(g:ttt_keys, '\zs')
+  let codes = get(s:reverse_table, char, [])
+  return map(codes[:], {_, code -> join(map(code[:], {_, k -> keys[k]}), '')})
+endfunction
+
+function! s:code_help_ch(ch, certain)
+  let ch = a:ch
+  let certain = a:certain
+  let codes = s:rev(ch)
+  if match(split(certain, '\zs'), ch) != -1
+    return ch
+  endif
+  return ch .. (!empty(codes) ? join(map(codes[:], {_, code -> '<' .. code .. '>'}), '') : '<-->')
+endfunction
+
+function! s:code_help_string(str, certain)
+  let str = a:str
+  let certain = a:certain
+  return join(map(split(str, '\zs'), {_, ch -> s:code_help_ch(ch, certain)}), '')
+endfunction
+
+" --------------------------------------------------------------------
+
+let g:tcaux_default_dictionary_directory = get(g:, 'tcaux_default_dictionary_directory', '$HOME/tcode')
+let g:tcaux_bushu_rev_files = get(g:, 'tcaux_bushu_rev_files', ["symbol.rev", "bushu.rev"])
+let g:tcaux_maze_yom_files = get(g:, 'tcaux_maze_yom_files', ["pd_kihon.yom", "jukujiku.maz", "greece.maz"])
+let g:tcaux_itaiji_maz_files = get(g:, 'tcaux_itaiji_maz_files', ["itaiji.maz"])
+
+function! s:dictionary_paths(dictionary_files)
+  let directory = expand(g:tcaux_default_dictionary_directory)
+  return map(a:dictionary_files[:], {_, file -> simplify(expand(file)) =~ '^/' ? simplify(expand(file)) : simplify(expand(directory .. '/' .. file))})
+endfunction
+
+function! s:read_text_files(files)
+  let lines = []
+  for file in a:files
+    try
+      let lines = lines + readfile(file)
+    catch
+      echomsg 'Cannot read file: ' .. file .. '; skipped'
+    endtry
+  endfor
+  return lines
+endfunction
+
+" --------------------------------------------------------------------
+
+let s:bushu_rev = {}
+let s:bushu_dic = {}
+
+function! s:bushu_load_rev()
+  let files = s:dictionary_paths(g:tcaux_bushu_rev_files)
+  let lines = s:read_text_files(files)
+  for line in lines
+    let ls = split(line, '\zs')
+    let len = len(ls)
+    if len == 2
+      let s:bushu_rev[ls[1]] = [ls[0], '']
+    elseif len == 3
+      let s:bushu_rev[ls[0]] = [ls[1], ls[2]]
+      let s:bushu_dic[ls[1] .. ls[2]] = ls[0]
+    endif
+  endfor
+endfunction
+
+call s:bushu_load_rev()
+
+function! s:bushu_look_sub(a, b)
+  return get(s:bushu_dic, a:a .. a:b, v:null)
+endfunction
+
+function! s:bushu_look_rev(c)
+  let ret = get(s:bushu_rev, a:c, [v:null, v:null])
+  return ret == [v:null, v:null] ? [a:c, ''] : ret
+endfunction
+
+function! s:bushu_look_one_sided(a, b)
+  let a = a:a
+  let b = a:b
+  let ret = []
+  let a12 = s:bushu_look_rev(a)
+  let a1 = a12[0]
+  let a2 = a12[1]
+  let b12 = s:bushu_look_rev(b)
+  let b1 = b12[0]
+  let b2 = b12[1]
+  let c = s:bushu_look_sub(a, b)
+  " 文字の足し算
+  if c != v:null | call add(ret, c) | endif
+  " 文字の引き算
+  if a2 == b || a2 == b1 && b2 == '' | call add(ret, a1) | endif
+  if a1 == b || a1 == b1 && b2 == '' | call add(ret, a2) | endif
+  " 部品の足し算
+  let c = s:bushu_look_sub(a, b1) | if c != v:null | call add(ret, c) | endif
+  let c = s:bushu_look_sub(a, b2) | if c != v:null | call add(ret, c) | endif
+  let c = s:bushu_look_sub(a1, b) | if c != v:null | call add(ret, c) | endif
+  let c = s:bushu_look_sub(a1, b1) | if c != v:null | call add(ret, c) | endif
+  let c = s:bushu_look_sub(a1, b2) | if c != v:null | call add(ret, c) | endif
+  let c = s:bushu_look_sub(a2, b) | if c != v:null | call add(ret, c) | endif
+  let c = s:bushu_look_sub(a2, b1) | if c != v:null | call add(ret, c) | endif
+  let c = s:bushu_look_sub(a2, b2) | if c != v:null | call add(ret, c) | endif
+  " 部品の引き算
+  if a2 == b1 | call add(ret, a1) | endif
+  if a1 == b2 | call add(ret, a2) | endif
+  if a1 == b1 | call add(ret, a2) | endif
+  if a2 == b2 | call add(ret, a1) | endif
+  "
+  return ret
+endfunction
+
+function! s:bushu_look(a, b)
+  let a = a:a
+  let b = a:b
+  let ls = s:bushu_look_one_sided(a, b) + s:bushu_look_one_sided(b, a)
+  call filter(ls, {_, c -> c != '' && c != a && c != b})
+  call uniq(ls)
+  return ls
+endfunction
+
+" --------------------------------------------------------------------
+
+let s:maze_yom = []
+
+function! s:maze_load_yom()
+  let files = s:dictionary_paths(g:tcaux_maze_yom_files)
+  let lines = s:read_text_files(files)
+  for line in lines
+    let ls = split(line, '[ \t]\+')
+    let len = len(ls)
+    if match(line, '^;;;') != -1
+      continue
+    elseif len == 1
+      let cand = substitute(line, '\(.\)<\(.\{-1,}\)>', '\1', 'g')
+      let cand = substitute(cand, '—$', '', '')
+      let re = substitute(line, '\(.\)<\(.\{-1,}\)>', '\\(\1\\|\2\\)', 'g')
+      let re = '^' .. substitute(re, '—$', '-\\?', '') .. '$'
+      let s:maze_yom = add(s:maze_yom, [re, cand])
+    elseif len == 2
+      let cand = substitute(ls[1], '—$', '', '')
+      let re = '^' .. substitute(ls[0], '—$', '\0\\?', '') .. '$'
+      let s:maze_yom = add(s:maze_yom, [re, cand])
+    endif
+  endfor
+endfunction
+
+call s:maze_load_yom()
+
+function! s:maze_look(str)
+  let str = a:str
+  let ret = filter(copy(s:maze_yom), {idx, ls -> match(str, ls[0]) != -1 && ls[1] != str})
+  let ret = map(ret, {idx, ls -> ls[1]})
+  let ret = uniq(ret)
+  return ret
+endfunction
+
+" --------------------------------------------------------------------
+
+let s:itaiji_maz = []
+
+function! s:itaiji_load_maz()
+  let files = s:dictionary_paths(g:tcaux_itaiji_maz_files)
+  let lines = s:read_text_files(files)
+  for line in lines
+    let ls = split(line, '[ \t]\+')
+    let len = len(ls)
+    if len == 1
+      let s:itaiji_maz = add(s:itaiji_maz, split(line, '\zs'))
+    elseif len == 2
+      let c1 = ls[0]
+      let c2 = ls[1]
+      let i = 0
+      let found = 0
+      while i < len(s:itaiji_maz)
+        let elm = s:itaiji_maz[i]
+        if match(elm, c1) != -1
+          let found = 1
+          break
+        endif
+        let i = i + 1
+      endwhile
+      if !found
+        call add(s:itaiji_maz, ls)
+      elseif match(elm, c2) == -1
+        call add(s:itaiji_maz[i], c2)
+      endif
+    endif
+  endfor
+endfunction
+
+call s:itaiji_load_maz()
+
+function! s:itaiji_look(key)
+  let key = a:key
+  for ls in s:itaiji_maz
+    if match(ls, key) != -1
+      return filter(ls[:], {_, ch -> ch != key})
+    endif
+  endfor
+  return []
+endfunction
+
+" --------------------------------------------------------------------
+
+function! s:invalidate_all(str)
+  let str = a:str
+  let str = substitute(str, '@b', '◆', 'g')
+  let str = substitute(str, '@m', '◇', 'g')
+  return str
+endfunction
+
+function! s:reduce(str)
+  let str = a:str
+  let m = matchlist(str, '\(.*\)\(@[bm]\)\(.*\)')
+  if empty(m)
+    return s:invalidate_all(str)
+  endif
+  let str1 = m[1]
+  let str2 = m[2]
+  let str3 = m[3]
+  let ls = split(str3, '\zs')
+  if str2 == '@b'
+    if len(ls) < 2
+      return s:invalidate_all(str)
+    endif
+    let a = ls[0]
+    let b = ls[1]
+    let cands = s:bushu_look(a, b)
+    if len(cands) < 1
+      return s:invalidate_all(str)
+    endif
+    let c = cands[0]
+    call s:show_code_help(c, '')
+    return s:reduce(str1 .. c .. join(split(str3, '\zs')[2:], ''))
+  elseif str2 == '@m'
+    if len(ls) < 1
+      return s:invalidate_all(str)
+    endif
+    let s = str3
+    let cands = s:itaiji_look(s) + s:maze_look(s)
+    call uniq(cands)
+    call filter(cands, {_, c -> c != s})
+    if len(cands) == 0
+      return s:invalidate_all(str)
+    elseif len(cands) == 1
+      let c = cands[0]
+    else
+      let selected = s:select(cands, {'prompt': "Reduce ◇" .. s .. " to:"})
+      if selected == v:null
+        return s:invalidate_all(str)
+      endif
+      let c = selected
+    endif
+    call s:show_code_help(c, s)
+    return s:reduce(str1 .. c)
+  else
+    return s:invalidate_all(str)
+  endif
+endfunction
+
+function! s:select(items, opts) abort
+  let prompt = get(a:opts, 'prompt', 'Select one of:')
+  let s:format_item = get(a:opts, 'format_item', {item -> item})
+  let items = map(a:items[:], {idx, item -> (idx + 1) .. ': ' .. s:format_item(item)})
+  redraw
+  let choice = inputlist(insert(items, prompt))
+  if 0 < choice && choice <= len(a:items)
+    return a:items[choice - 1]
+  else
+    return v:null
+  endif
+endfunction
+
+function! s:show_code_help(str, certain)
+  let str = a:str
+  let certain = a:certain
+  let help = s:code_help_string(str, certain)
+  redraw
+  echomsg help
 endfunction
 
 " --------------------------------------------------------------------

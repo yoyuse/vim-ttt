@@ -6,6 +6,8 @@
 "
 " Usage:
 "
+"   let g:tcaux_default_dictionary_directory = "$HOME/tcode"
+"
 "   if has('gui_macvim') && has('gui_running')
 "     " use Command+j
 "     imap <D-j> <Plug>(ttt-do-ttt)
@@ -1419,6 +1421,7 @@ endfunction
 " --------------------------------------------------------------------
 
 let s:reverse_table = {}
+let s:code_help_ready = 0
 
 function! s:make_reverse_table(table, prefix)
   let table = a:table
@@ -1442,9 +1445,13 @@ function! s:make_reverse_table(table, prefix)
   return s:reverse_table
 endfunction
 
-call s:make_reverse_table(g:ttt_table, [])
-
 function! s:rev(char)
+  if !s:code_help_ready
+    redraw | echomsg "Making code help..."
+    call s:make_reverse_table(g:ttt_table, [])
+    redraw | echomsg "Making code help... done"
+    let s:code_help_ready = 1
+  endif
   let char = a:char
   let keys = split(g:ttt_keys, '\zs')
   let codes = get(s:reverse_table, char, [])
@@ -1495,6 +1502,7 @@ endfunction
 
 let s:bushu_rev = {}
 let s:bushu_dic = {}
+let s:bushu_ready = 0
 
 function! s:bushu_load_rev()
   let files = s:dictionary_paths(g:tcaux_bushu_rev_files)
@@ -1510,8 +1518,6 @@ function! s:bushu_load_rev()
     endif
   endfor
 endfunction
-
-call s:bushu_load_rev()
 
 function! s:bushu_look_sub(a, b)
   return get(s:bushu_dic, a:a .. a:b, v:null)
@@ -1557,6 +1563,12 @@ function! s:bushu_look_one_sided(a, b)
 endfunction
 
 function! s:bushu_look(a, b)
+  if !s:bushu_ready
+    redraw | echomsg "Loading bushu dic..."
+    call s:bushu_load_rev()
+    redraw | echomsg "Loading bushu dic... done"
+    let s:bushu_ready = 1
+  endif
   let a = a:a
   let b = a:b
   let ls = s:bushu_look_one_sided(a, b) + s:bushu_look_one_sided(b, a)
@@ -1568,6 +1580,7 @@ endfunction
 " --------------------------------------------------------------------
 
 let s:maze_yom = []
+let s:maze_ready = 0
 
 function! s:maze_load_yom()
   let files = s:dictionary_paths(g:tcaux_maze_yom_files)
@@ -1591,9 +1604,13 @@ function! s:maze_load_yom()
   endfor
 endfunction
 
-call s:maze_load_yom()
-
 function! s:maze_look(str)
+  if !s:maze_ready
+    redraw | echomsg "Loading maze dic..."
+    call s:maze_load_yom()
+    redraw | echomsg "Loading maze dic... done"
+    let s:maze_ready = 1
+  endif
   let str = a:str
   let ret = filter(copy(s:maze_yom), {idx, ls -> match(str, ls[0]) != -1 && ls[1] != str})
   let ret = map(ret, {idx, ls -> ls[1]})
@@ -1604,6 +1621,7 @@ endfunction
 " --------------------------------------------------------------------
 
 let s:itaiji_maz = []
+let s:itaiji_ready = 0
 
 function! s:itaiji_load_maz()
   let files = s:dictionary_paths(g:tcaux_itaiji_maz_files)
@@ -1635,9 +1653,13 @@ function! s:itaiji_load_maz()
   endfor
 endfunction
 
-call s:itaiji_load_maz()
-
 function! s:itaiji_look(key)
+  if !s:itaiji_ready
+    redraw | echomsg "Loading itaiji dic..."
+    call s:itaiji_load_maz()
+    redraw | echomsg "Loading itaiji dic... done"
+    let s:itaiji_ready = 1
+  endif
   let key = a:key
   for ls in s:itaiji_maz
     if match(ls, key) != -1

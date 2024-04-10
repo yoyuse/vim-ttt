@@ -7,7 +7,7 @@ vim-ttt provides a modeless Japanese input with TT-code.
 ## Install
 
 Install using your favorite package manager, or use Vim's built-in package
-support: 
+support:
 
 ``` shellsession
 mkdir -p ~/.vim/pack/yoyuse/start

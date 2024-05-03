@@ -118,4 +118,4 @@ Defaults to `':'`.
 
 ## License
 
-MIT
+GNU GPL

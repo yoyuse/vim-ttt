@@ -2,7 +2,7 @@
 " autoload/ttt.vim
 "
 " Maintainer: YUSE Yosihiro <yoyuse@gmail.com>
-" Last Change: 2024-04-10
+" Last Change: 2024-05-30
 "
 " Usage:
 "
@@ -1382,8 +1382,15 @@ function! ttt#do_ttt()
   return s:do_ttt(s:get_line_substring())
 endfunction
 
+function! s:get_cmdline_substring()
+  if getcmdpos() == 1
+    return ""
+  endif
+  return getcmdline()[:getcmdpos() - 1 - 1]
+endfunction
+
 function! ttt#do_ttt_cmdline()
-  return s:do_ttt(getcmdline())
+  return s:do_ttt(s:get_cmdline_substring())
 endfunction
 
 " --------------------------------------------------------------------
